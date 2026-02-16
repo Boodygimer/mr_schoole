@@ -23,7 +23,9 @@ import random
 import string
 import re
 from werkzeug.security import generate_password_hash, check_password_hash
+from dotenv import load_dotenv
 
+load_dotenv()
 
 # --- App configuration ---
 app = Flask(__name__)
@@ -377,75 +379,20 @@ def save_chat_message():
     db.session.commit()
     return {'success': True, 'message': msg.to_dict()}
 
-# --- Socket.IO Event Handlers ---
-@socketio.on('connect')
-def handle_connect():
-    """Handle client connection."""
-    if current_user.is_authenticated:
-        emit('connection_response', {'data': 'Connected to chat server'})
-
+# --- Real-time Chat Functionality ---
 @socketio.on('join_room')
-def on_join_room(data):
-    """Handle user joining a chat room."""
-    room = data.get('room')
-    if not current_user.is_authenticated or not room:
-        emit('error', {'message': 'Invalid request'})
-        return
-    
+def handle_join_room_event(data):
+    room = data['room']
     join_room(room)
-    emit('user_joined', {
-        'user': current_user.name,
-        'message': f'{current_user.name} joined the room'
-    }, to=room)
+    emit('room_message', {'message': f"{data['username']} has joined the room."}, room=room)
+
+@socketio.on('leave_room')
+def handle_leave_room_event(data):
+    room = data['room']
+    leave_room(room)
+    emit('room_message', {'message': f"{data['username']} has left the room."}, room=room)
 
 @socketio.on('send_message')
-def handle_send_message(data):
-    """Handle incoming chat message from Socket.IO."""
-    if not current_user.is_authenticated:
-        emit('error', {'message': 'Not authenticated'})
-        return
-    
-    room = data.get('room')
-    message = data.get('message', '').strip()
-    
-    if not room or not message:
-        emit('error', {'message': 'Invalid message'})
-        return
-    
-    # Sanitize message (basic XSS prevention)
-    message = message[:500] if len(message) > 500 else message
-    
-    # Save to database
-    msg = ChatMessage(
-        user_id=current_user.id,
-        room=room,
-        message=message
-    )
-    db.session.add(msg)
-    db.session.commit()
-    
-    # Broadcast to room
-    emit('receive_message', {
-        'user': current_user.name,
-        'message': message,
-        'timestamp': msg.timestamp.isoformat(),
-        'user_id': current_user.id
-    }, to=room)
-
-@socketio.on('typing')
-def handle_typing(data):
-    """Broadcast typing indicator."""
-    room = data.get('room')
-    user = current_user.name if current_user.is_authenticated else 'Anonymous'
-    emit('user_typing', {'user': user}, to=room)
-
-@socketio.on('disconnect')
-def handle_disconnect():
-    """Handle user disconnection."""
-    print(f'Client disconnected: {current_user.name if current_user.is_authenticated else "Anonymous"}')
-
-if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-    port = int(os.environ.get('PORT', 5000))
-    socketio.run(app, debug=True, host='0.0.0.0', port=port, allow_unsafe_werkzeug=True)
+def handle_send_message_event(data):
+    room = data['room']
+    emit('room_message', {'username': data['username'], 'message': data['message']}, room=room)
