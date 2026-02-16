@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<!-- Chat layout: lightweight discussion area for research collaboration -->
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ current_server.name }} | Research Search</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <style>
+        /* Professional Color System - Chat Interface */
+        :root {
+          --primary: #0B3D91;
+          --primary-light: #1E5BBE;
+          --bg-primary: #FFFFFF;
+          --bg-secondary: #F8FAFB;
+          --bg-tertiary: #EEF2F9;
+          --text-dark: #0B1621;
+          --text-normal: #2D3E52;
+          --text-muted: #8A92A3;
+          --border: #D5DDE5;
+        }
+        body { background-color: var(--bg-secondary); color: var(--text-dark); height: 100vh; overflow: hidden; display: flex; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+        .servers-nav { width: 72px; background-color: var(--bg-tertiary); display: flex; flex-direction: column; align-items: center; padding-top: 12px; overflow-y: auto; border-right: 1px solid var(--border) }
+        .server-icon { width: 48px; height: 48px; background-color: #FFFFFF; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 8px; text-decoration: none; color: var(--primary); transition: all 0.15s; box-shadow: 0 4px 12px rgba(11,61,145,0.08) }
+        .server-icon:hover, .server-icon.active { background-color: var(--primary); color: white; border-radius: 12px; }
+        .channels-nav { width: 260px; background-color: white; display: flex; flex-direction: column; border-right: 1px solid var(--border) }
+        .chat-area { flex-grow: 1; display: flex; flex-direction: column; background: #FFFFFF }
+        .messages-area { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: linear-gradient(180deg, #FFFFFF, #F8FAFB) }
+        .msg-row { display: flex; gap: 10px; animation: fadeIn 0.18s; padding: 8px; border-radius: 6px; transition: background 0.2s }
+        .msg-row:hover { background: #F0F4F9 }
+        .msg-avatar { width: 40px; height: 40px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; flex-shrink: 0 }
+        .msg-content h6 { margin: 0; font-size: 14px; color: var(--text-dark); font-weight: 600 }
+        .msg-content p { margin: 4px 0 0; color: var(--text-normal); font-size: 14px }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <div class="servers-nav">
+        {% if user.role == 'Owner' %}
+        <a href="{{ url_for('dashboard') }}" class="server-icon" style="color: #3ba55c;"><i class="fas fa-cog"></i></a>
+        <hr style="width: 32px; border-color: #36393f;">
+        {% endif %}
+        {% for server in servers %}
+        <a href="{{ url_for('server_view', server_id=server.id) }}" class="server-icon {% if server.id == current_server.id %}active{% endif %}">{{ server.icon }}</a>
+        {% endfor %}
+    </div>
+
+    <div class="channels-nav">
+        <div class="p-3 fw-bold text-white shadow-sm">{{ current_server.name }}</div>
+        <div class="flex-grow-1 p-2">
+            <small class="text-uppercase text-muted fw-bold" style="font-size: 11px;">القنوات</small>
+            {% for channel in current_server.channels %}
+            <div class="py-1 px-2 text-muted"><i class="fas fa-hashtag me-2"></i> {{ channel.name }}</div>
+            {% endfor %}
+        </div>
+        <div class="p-2 bg-dark d-flex align-items-center">
+            <div class="msg-avatar" style="width: 30px; height: 30px;">{{ user.name[0] | upper }}</div>
+            <div class="ms-2">
+                <div class="fw-bold text-white" style="font-size: 13px;">{{ user.name }}</div>
+                <div class="text-muted" style="font-size: 11px;">#{{ user.id }}</div>
+            </div>
+            <a href="{{ url_for('logout') }}" class="ms-auto text-danger"><i class="fas fa-sign-out-alt"></i></a>
+        </div>
+    </div>
+
+    <div class="chat-area">
+        <div class="p-3 shadow-sm" style="background: var(--bg-tertiary); border-bottom: 1px solid var(--border)">
+            <div style="font-weight: 600; color: var(--text-dark); display: flex; align-items: center; gap: 8px">
+                <i class="fas fa-hashtag" style="color: var(--text-muted)"></i>
+                <span id="current-room">دردشة عامة</span>
+                <span style="margin-left: auto; font-size: 12px; color: var(--text-muted)">
+                    <span id="user-count">0</span> عضو متصل
+                </span>
+            </div>
+        </div>
+        
+        <div class="messages-area" id="messagesContainer">
+            <!-- Messages will be loaded here -->
+            <div style="text-align: center; color: var(--text-muted); padding-top: 40px">
+                جاري تحميل سجل الرسائل...
+            </div>
+        </div>
+
+        <!-- Typing indicator -->
+        <div id="typing-indicator" style="padding: 8px 20px; font-size: 12px; color: var(--text-muted); min-height: 16px; display: none">
+            <span id="typing-user"></span> <i class="fas fa-ellipsis-h"></i>
+        </div>
+
+        <div class="p-3" style="background: var(--bg-tertiary); border-top: 1px solid var(--border); display: flex; gap: 8px">
+            <input type="text" id="msgInput" class="form-control" placeholder="اكتب رسالة..." style="border: 1px solid var(--border); background: white; color: var(--text-dark)">
+            <button id="send-btn" class="btn" style="background: var(--primary); color: white; border: none; padding: 8px 16px">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Chat configuration
+        const CHAT_SERVER = "{{ request.host_url }}".replace(/\/$/, '');
+        const userName = "{{ user.name }}";
+        const userId = "{{ user.id }}";
+        const roomName = "{{ room_name }}";
+        
+        const messagesContainer = document.getElementById('messagesContainer');
+        const msgInput = document.getElementById('msgInput');
+        const sendBtn = document.getElementById('send-btn');
+        const typingIndicator = document.getElementById('typing-indicator');
+        const typingUser = document.getElementById('typing-user');
+        const userCountEl = document.getElementById('user-count');
+        const currentRoomEl = document.getElementById('current-room');
+        
+        let socket = null;
+        let typingTimeout = null;
+        let connectedUsers = new Set();
+
+        // Connect to Flask Socket.IO server
+        function initChat() {
+            try {
+                socket = io();  // Connects to same host (Flask server)
+
+                // Connection events
+                socket.on('connect', () => {
+                    console.log('✅ Connected to Flask chat server');
+                    socket.emit('join_room', {
+                        room: roomName
+                    });
+                    loadChatHistory();
+                });
+
+                socket.on('connection_response', (data) => {
+                    console.log('Connection response:', data);
+                });
+
+                socket.on('connect_error', (err) => {
+                    console.error('❌ Connection error:', err);
+                    showSystemMessage('خطأ في الاتصال بخادم الشات');
+                });
+
+                socket.on('disconnect', () => {
+                    console.log('🔌 Disconnected from server');
+                    showSystemMessage('تم قطع الاتصال');
+                });
+
+                // Receive message
+                socket.on('receive_message', (data) => {
+                    appendMessage(data);
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                });
+
+                // User join notification
+                socket.on('user_joined', (data) => {
+                    showSystemMessage(`✓ ${data.user} انضم إلى الغرفة`);
+                });
+
+                // User left notification
+                socket.on('user_left', (data) => {
+                    showSystemMessage(`✗ مستخدم غادر الغرفة`);
+                });
+
+                // Typing indicator
+                socket.on('user_typing', (data) => {
+                    typingUser.textContent = data.user;
+                    typingIndicator.style.display = 'block';
+                    
+                    clearTimeout(typingTimeout);
+                    typingTimeout = setTimeout(() => {
+                        typingIndicator.style.display = 'none';
+                    }, 2000);
+                });
+
+                // Error
+                socket.on('error', (err) => {
+                    console.error('Socket error:', err);
+                    showSystemMessage('حدث خطأ: ' + (err.message || 'خطأ غير معروف'));
+                });
+
+            } catch (err) {
+                console.error('Failed to initialize chat:', err);
+                showSystemMessage('فشل تهيئة نظام الشات');
+            }
+        }
+
+        // Load chat history from Flask API
+        async function loadChatHistory() {
+            try {
+                const response = await fetch(`${CHAT_SERVER}/api/chat/messages/${encodeURIComponent(roomName)}`);
+                if (!response.ok) throw new Error('Failed to load history');
+                
+                const data = await response.json();
+                messagesContainer.innerHTML = ''; // Clear loading message
+                
+                if (data.messages && data.messages.length > 0) {
+                    data.messages.forEach(msg => appendMessage(msg, false));
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                } else {
+                    showSystemMessage('لا توجد رسائل سابقة في هذه الغرفة');
+                }
+            } catch (err) {
+                console.error('Failed to load chat history:', err);
+                showSystemMessage('فشل تحميل سجل الرسائل');
+            }
+        }
+
+        // Send message
+        function sendMessage() {
+            const msg = msgInput.value.trim();
+            if (!msg) return;
+            
+            if (!socket || !socket.connected) {
+                showSystemMessage('غير متصل بخادم الشات');
+                return;
+            }
+
+            socket.emit('send_message', {
+                room: roomName,
+                message: msg
+            });
+
+            msgInput.value = '';
+        }
+
+        // Append message to UI
+        function appendMessage(data, isNew = true) {
+            const div = document.createElement('div');
+            div.className = 'msg-row';
+            
+            const isOwnMessage = data.user === userName;
+            const avatarLetter = data.user.charAt(0).toUpperCase();
+            const bgColor = isOwnMessage ? 'linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%)' : '#8A92A3';
+            
+            const timestamp = data.timestamp ? new Date(data.timestamp).toLocaleTimeString('en-US', { hour12: false }) : '';
+            
+            div.innerHTML = `
+                <div class="msg-avatar" style="background: ${bgColor}">${avatarLetter}</div>
+                <div class="msg-content">
+                    <h6>${data.user} <span style="font-size:10px; color:var(--text-muted)">${timestamp}</span></h6>
+                    <p>${escapeHtml(data.message)}</p>
+                </div>
+            `;
+            
+            if (isNew) {
+                div.style.animation = 'fadeIn 0.3s ease-in';
+            }
+            
+            messagesContainer.appendChild(div);
+        }
+
+        // Show system message
+        function showSystemMessage(text) {
+            const div = document.createElement('div');
+            div.style.cssText = 'text-align: center; color: var(--text-muted); padding: 12px; font-size: 12px; margin: 8px 0';
+            div.innerHTML = text;
+            messagesContainer.appendChild(div);
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Event listeners
+        sendBtn.addEventListener('click', sendMessage);
+        
+        msgInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        msgInput.addEventListener('input', () => {
+            if (!socket || !socket.connected) return;
+            
+            socket.emit('typing', { room: roomName });
+        });
+
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            initChat();
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (socket) socket.disconnect();
+        });
+    </script>
+</body>
+</html>

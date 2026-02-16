@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>لوحة التحكم المدرسية</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap"
+      rel="stylesheet" />
+    <style>
+      /* Professional Color System - Academic Research Theme */
+      :root {
+        --primary: #0B3D91;
+        --primary-light: #1E5BBE;
+        --primary-dark: #071E4A;
+        --bg-page: #F8FAFB;
+        --bg-card: #FFFFFF;
+        --bg-hover: #F0F4F9;
+        --text-dark: #0B1621;
+        --text-normal: #2D3E52;
+        --text-muted: #8A92A3;
+        --border-light: #D5DDE5;
+        --success: #10B981;
+        --warning: #F59E0B;
+        --danger: #EF4444;
+        --info: #3B82F6;
+      }
+      body { background-color: var(--bg-page); color: var(--text-dark); font-family: "Cairo", -apple-system, BlinkMacSystemFont, sans-serif; overflow-x: hidden; }
+      .sidebar { height: 100vh; background: linear-gradient(180deg, #0B3D91 0%, #071E4A 100%); color: white; padding-top: 20px; position: fixed; width: 250px; transition: all 0.2s; }
+      .sidebar-brand {
+        font-size: 1.5rem;
+        font-weight: 700;
+        padding: 0 1rem;
+        margin-bottom: 2rem;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+      .nav-link {
+        color: rgba(255, 255, 255, 0.8);
+        padding: 1rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .nav-link:hover,
+      .nav-link.active {
+        color: #fff;
+        background-color: rgba(255, 255, 255, 0.12);
+        text-decoration: none;
+        border-radius: 4px;
+      }
+      .main-content {
+        margin-right: 250px;
+        padding: 30px;
+        background-color: var(--bg-page);
+      }
+      .card { background-color: var(--bg-card); border: 1px solid var(--border-light); border-radius: 12px; box-shadow: 0 2px 8px rgba(11,26,43,0.04); margin-bottom: 20px; transition: all 0.2s; }
+      .card:hover { box-shadow: 0 8px 24px rgba(11,26,43,0.08); transform: translateY(-2px) }
+      .card-header { background-color: transparent; border-bottom: 1px solid var(--border-light); font-weight: 700; padding: 1.25rem; color: var(--text-dark) }
+      .stat-card {
+        border-left: 4px solid var(--primary-light);
+        background: linear-gradient(135deg, rgba(30,91,190,0.02) 0%, rgba(30,91,190,0.01) 100%);
+      }
+      .btn-custom { border-radius: 6px; padding: 7px 18px; background: var(--primary); color: white; border: none; transition: all 0.2s; font-weight: 500; }
+      .btn-custom:hover { background: var(--primary-light); transform: translateY(-2px) }
+      .table-dark {
+        background-color: transparent;
+        --bs-table-bg: transparent;
+        color: var(--text-normal);
+      }
+      .table-dark th {
+        color: var(--primary);
+        font-weight: 700;
+        border-color: var(--border-light);
+      }
+      .table-dark td {
+        border-color: var(--border-light);
+      }
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: var(--bg-page);
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--primary-light);
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--primary);
+      }
+      .announcement-item, .resource-item { border-bottom: 1px solid var(--border-light); padding: 14px 0 }
+      .announcement-item:last-child, .resource-item:last-child { border-bottom: none }
+      .announcement-item h5, .resource-item h5 { color: var(--primary-light) }
+      /* Responsive adjustments */
+      @media (max-width: 768px) {
+        .sidebar {
+          width: 100%;
+          height: auto;
+          position: relative;
+        }
+        .main-content {
+          margin-right: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <div class="sidebar d-flex flex-column">
+      <div class="sidebar-brand"><span>🎓</span> مدرستي</div>
+      <nav class="nav flex-column">
+        <a class="nav-link active" href="/dashboard">
+          <span>🏠</span> لوحة التحكم
+        </a>
+        <a class="nav-link" href="/"> <span>💬</span> الشات (Discord) </a>
+        <a class="nav-link" href="/watch"> <span>📺</span> الفيديوهات </a>
+        {% if user.role == 'Owner' %}
+        <div class="mt-auto p-3">
+          <small class="text-white-50">لوحة المالك</small>
+        </div>
+        {% endif %}
+        <a class="nav-link text-danger mt-auto" href="/logout">
+          <span>🚪</span> تسجيل الخروج
+        </a>
+      </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Header -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h2 class="mb-0">أهلاً بك، {{ user.name }}! 👋</h2>
+          <p class="text-muted">هنا ملخص لما يحدث في مدرستك اليوم.</p>
+        </div>
+        <div class="rounded-pill px-4 py-2" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); color: white; font-weight: 600">
+          {{ user.role == 'Owner' and '👑 مالك' or (user.role == 'Teacher' and '👨‍🏫 مدرس' or '👨‍🎓 طالب') }}
+        </div>
+      </div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %} {% for category, message in messages %}
+      <div
+        class="alert alert-{{ category }} alert-dismissible fade show"
+        role="alert">
+        {{ message }}
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="alert"
+          aria-label="Close"></button>
+      </div>
+      {% endfor %} {% endif %} {% endwith %}
+
+      <!-- Stats Row -->
+      <div class="row">
+        <div class="col-xl-3 col-md-6 mb-4">
+          <div
+            class="card stat-card h-100 py-2"
+            style="border-left-color: var(--primary-color)">
+            <div class="card-body">
+              <div class="row no-gutters align-items-center">
+                <div class="col mr-2">
+                  <div
+                    class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                    المواد الدراسية
+                  </div>
+                  <div class="h5 mb-0 font-weight-bold text-gray-800">
+                    {{ servers|length }}
+                  </div>
+                </div>
+                <div class="col-auto">
+                  <h3>📚</h3>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+          <div
+            class="card stat-card h-100 py-2"
+            style="border-left-color: var(--success-color)">
+            <div class="card-body">
+              <div class="row no-gutters align-items-center">
+                <div class="col mr-2">
+                  <div
+                    class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                    المستخدمين
+                  </div>
+                  <div class="h5 mb-0 font-weight-bold text-gray-800">
+                    {{ users|length }}
+                  </div>
+                </div>
+                <div class="col-auto">
+                  <h3>👥</h3>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+          <div
+            class="card stat-card h-100 py-2"
+            style="border-left-color: var(--warning-color)">
+            <div class="card-body">
+              <div class="row no-gutters align-items-center">
+                <div class="col mr-2">
+                  <div
+                    class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                    الإعلانات
+                  </div>
+                  <div class="h5 mb-0 font-weight-bold text-gray-800">
+                    {{ announcements|length }}
+                  </div>
+                </div>
+                <div class="col-auto">
+                  <h3>📢</h3>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+          <div
+            class="card stat-card h-100 py-2"
+            style="border-left-color: var(--info-color)">
+            <div class="card-body">
+              <div class="row no-gutters align-items-center">
+                <div class="col mr-2">
+                  <div
+                    class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                    المصادر
+                  </div>
+                  <div class="h5 mb-0 font-weight-bold text-gray-800">
+                    {{ resources|length }}
+                  </div>
+                </div>
+                <div class="col-auto">
+                  <h3>🔗</h3>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <!-- Announcements & Resources -->
+        <div class="col-lg-8">
+          <!-- Announcements -->
+          <div class="card mb-4">
+            <div
+              class="card-header d-flex justify-content-between align-items-center">
+              <h6 class="m-0 font-weight-bold">📢 إعلانات المدرسة</h6>
+              {% if user.role in ['Owner', 'Teacher'] %}
+              <button
+                class="btn btn-sm btn-primary btn-custom"
+                data-bs-toggle="modal"
+                data-bs-target="#addAnnouncementModal">
+                + إضافة
+              </button>
+              {% endif %}
+            </div>
+            <div class="card-body" style="max-height: 300px; overflow-y: auto">
+              {% if announcements %} {% for announcement in announcements %}
+              <div class="announcement-item">
+                <div class="d-flex w-100 justify-content-between">
+                  <h5 class="mb-1 text-primary">{{ announcement.title }}</h5>
+                  <small class="text-muted"
+                    >{{ announcement.date_posted.strftime('%Y-%m-%d') }}</small
+                  >
+                </div>
+                <p class="mb-1">{{ announcement.content }}</p>
+                {% if user.role in ['Owner', 'Teacher'] %}
+                <small
+                  ><a
+                    href="/delete_announcement/{{ announcement.id }}"
+                    class="text-danger"
+                    onclick="return confirm('حذف هذا الإعلان؟');"
+                    >حذف</a
+                  ></small
+                >
+                {% endif %}
+              </div>
+              {% endfor %} {% else %}
+              <p class="text-center text-muted">لا توجد إعلانات حالياً.</p>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Resources -->
+          <div class="card mb-4">
+            <div
+              class="card-header d-flex justify-content-between align-items-center">
+              <h6 class="m-0 font-weight-bold">
+                🔗 مصادر تعليمية (International Resources)
+              </h6>
+              {% if user.role in ['Owner', 'Teacher'] %}
+              <button
+                class="btn btn-sm btn-success btn-custom"
+                data-bs-toggle="modal"
+                data-bs-target="#addResourceModal">
+                + إضافة
+              </button>
+              {% endif %}
+            </div>
+            <div class="card-body">
+              <div class="row">
+                {% for resource in resources %}
+                <div class="col-md-6 mb-3">
+                  <div class="p-3 border rounded" style="border-color: var(--border-light); background: linear-gradient(135deg, rgba(30,91,190,0.04) 0%, rgba(30,91,190,0.01) 100%); border-radius: 10px">
+                    <div class="d-flex justify-content-between">
+                      <h5 style="color: var(--primary-light); margin: 0">{{ resource.title }}</h5>
+                      <span class="badge rounded-pill" style="background: var(--info); padding: 6px 10px; font-size: 11px">{{ resource.category }}</span>
+                    </div>
+                    <p class="small" style="color: var(--text-muted); margin: 8px 0">
+                      {{ resource.description }}
+                    </p>
+                    <a href="{{ resource.link }}" target="_blank" class="btn btn-sm w-100" style="background: var(--primary); color: white; border: none; font-size: 13px">زيارة الرابط ↗</a>
+                    {% if user.role in ['Owner', 'Teacher'] %}
+                    <div class="text-end mt-2">
+                      <a href="/delete_resource/{{ resource.id }}" class="small" style="color: var(--danger)" onclick="return confirm('حذف؟');">حذف</a>
+                    </div>
+                    {% endif %}
+                  </div>
+                </div>
+                {% endfor %}
+
+                <!-- Static Suggested Resources -->
+                <div class="col-md-6 mb-3">
+                  <div class="p-3 border rounded" style="border-color: var(--border-light); background: linear-gradient(135deg, rgba(245,158,11,0.08) 0%, rgba(245,158,11,0.02) 100%); border-radius: 10px">
+                    <h5 style="color: var(--warning)">Khan Academy</h5>
+                    <p class="small" style="color: var(--text-muted); margin-bottom: 8px">
+                      دروس مجانية في جميع المواد.
+                    </p>
+                    <a href="https://www.khanacademy.org" target="_blank" class="btn btn-sm w-100" style="background: var(--warning); color: white; border: none">زيارة</a>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <div class="p-3 border rounded" style="border-color: var(--border-light); background: linear-gradient(135deg, rgba(245,158,11,0.08) 0%, rgba(245,158,11,0.02) 100%); border-radius: 10px">
+                    <h5 style="color: var(--warning)">Coursera for Students</h5>
+                    <p class="small" style="color: var(--text-muted); margin-bottom: 8px">دورات من جامعات عالمية.</p>
+                    <a href="https://www.coursera.org" target="_blank" class="btn btn-sm w-100" style="background: var(--warning); color: white; border: none">زيارة</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Management Side -->
+        <div class="col-lg-4">
+          {% if user.role == 'Owner' %}
+          <!-- Add Server -->
+          <div class="card mb-4">
+            <div class="card-header" style="background: linear-gradient(90deg, rgba(30,91,190,0.08) 0%, transparent 100%);">
+              ✏️ إضافة مادة (سيرفر)
+            </div>
+            <div class="card-body">
+              <form
+                action="/add_server"
+                method="POST"
+                class="d-flex flex-column gap-2">
+                <input
+                  name="server_name"
+                  class="form-control"
+                  placeholder="اسم المادة"
+                  required />
+                <select name="server_icon" class="form-select">
+                  <option>⚛️ فيزياء</option>
+                  <option>💻 حاسب</option>
+                  <option>🎮 ترفيه</option>
+                  <option>📐 رياضيات</option>
+                  <option>🧪 كيمياء</option>
+                </select>
+                <button class="btn btn-light w-100">إضافة</button>
+              </form>
+              <ul class="list-group mt-3 list-group-flush">
+                {% for server in servers %}
+                <li
+                  class="list-group-item" style="background: transparent; color: var(--text-dark); border-color: var(--border-light); display: flex; justify-content: space-between; align-items: center">
+                  <span>{{ server.icon }} {{ server.name }}</span>
+                  <a
+                    href="/delete_server/{{ server.id }}"
+                    class="btn btn-sm btn-danger py-0 px-2"
+                    >x</a
+                  >
+                </li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+
+          <!-- User Roles -->
+          <div class="card mb-4">
+            <div class="card-header" style="background: linear-gradient(90deg, rgba(16,185,129,0.08) 0%, transparent 100%);">
+              👮‍♂️ إدارة المستخدمين
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-dark table-hover mb-0">
+                  <thead>
+                    <tr>
+                      <th>الاسم</th>
+                      <th>الرتبة</th>
+                      <th>#</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for u in users %}
+                    <tr>
+                      <td>{{ u.name }}</td>
+                      <td>
+                        <span
+                          class="badge rounded-pill" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); padding: 6px 12px"
+                          >{{ u.role }}</span
+                        >
+                      </td>
+                      <td>
+                        {% if u.id != user.id %}
+                        <form
+                          action="/update_role"
+                          method="POST"
+                          class="d-flex gap-1">
+                          <input
+                            type="hidden"
+                            name="user_id"
+                            value="{{ u.id }}" />
+                          <select
+                            name="new_role"
+                            class="form-select form-select-sm p-1"
+                            style="width: 70px; font-size: 0.8rem"
+                            onchange="this.form.submit()">
+                            <option value="" selected disabled>تغيير</option>
+                            <option value="Student">طالب</option>
+                            <option value="Teacher">مدرس</option>
+                            <option value="Owner">مالك</option>
+                          </select>
+                        </form>
+                        {% endif %}
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Quick Tips -->
+          <div class="card mb-4 bg-gradient">
+            <div class="card-body text-center">
+              <h5>💡 نصيحة اليوم</h5>
+              <p class="mb-0 text-muted">
+                "التعليم هو أقوى سلاح يمكنك استخدامه لتغيير العالم."
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Add Announcement Modal -->
+    <div
+      class="modal fade"
+      id="addAnnouncementModal"
+      tabindex="-1"
+      aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content" style="background: var(--bg-card); color: var(--text-dark); border: 1px solid var(--border-light)">
+          <div class="modal-header" style="border-color: var(--border-light)">
+            <h5 class="modal-title">إضافة إعلان جديد</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <form action="/add_announcement" method="POST">
+            <div class="modal-body">
+              <div class="mb-3">
+                <label class="form-label">العنوان</label>
+                <input type="text" name="title" class="form-control" required />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">المحتوى</label>
+                <textarea
+                  name="content"
+                  class="form-control"
+                  rows="3"
+                  required></textarea>
+              </div>
+            </div>
+            <div class="modal-footer" style="border-color: var(--border-light)">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+              <button type="submit" class="btn" style="background: var(--primary); color: white; border: none">نشر</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Resource Modal -->
+    <div
+      class="modal fade"
+      id="addResourceModal"
+      tabindex="-1"
+      aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content" style="background: var(--bg-card); color: var(--text-dark); border: 1px solid var(--border-light)">
+          <div class="modal-header" style="border-color: var(--border-light)">
+            <h5 class="modal-title">إضافة مصدر تعليمي</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <form action="/add_resource" method="POST">
+            <div class="modal-body">
+              <div class="mb-3">
+                <label class="form-label">عنوان المصدر</label>
+                <input type="text" name="title" class="form-control" required />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">الرابط</label>
+                <input type="url" name="link" class="form-control" required />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">التصنيف</label>
+                <select name="category" class="form-select">
+                  <option value="General">عام</option>
+                  <option value="Math">رياضيات</option>
+                  <option value="Science">علوم</option>
+                  <option value="Programming">برمجة</option>
+                  <option value="Languages">لغات</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">وصف قصير</label>
+                <textarea
+                  name="description"
+                  class="form-control"
+                  rows="2"></textarea>
+              </div>
+            </div>
+            <div class="modal-footer" style="border-color: var(--border-light)">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+              <button type="submit" class="btn" style="background: var(--success); color: white; border: none">إضافة</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Modal Trigger Scripts -->
+    <script>
+      var addAnnouncementModal = new bootstrap.Modal(
+        document.getElementById("addAnnouncementModal"),
+        {},
+      );
+      var addResourceModal = new bootstrap.Modal(
+        document.getElementById("addResourceModal"),
+        {},
+      );
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

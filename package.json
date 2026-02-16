@@ -1,0 +1,32 @@
+{
+  "name": "research-search-chat-server",
+  "version": "1.0.0",
+  "description": "Real-time chat server for Research Search platform",
+  "main": "chat_server.js",
+  "scripts": {
+    "start": "node chat_server.js",
+    "dev": "nodemon chat_server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "socket.io",
+    "chat",
+    "real-time",
+    "flask",
+    "collaboration"
+  ],
+  "author": "Boody Gimer",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.6.1",
+    "cors": "^2.8.5",
+    "axios": "^1.3.4"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.20"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

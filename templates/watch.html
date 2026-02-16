@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<!-- Video viewer: playback with watermark to discourage downloads -->
+<html lang="ار" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>مشاهدة الدرس — Research Search</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Professional Video Viewer */
+        :root { --primary: #0B3D91; --text-dark: #0B1621; --bg-dark: #0B1621 }
+        body { background: linear-gradient(135deg, #0B1621 0%, #071E4A 100%); color: #fff; height: 100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif }
+        .video-box { position: relative; width: 85%; max-width: 1200px; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.7); border: 1px solid rgba(30,91,190,0.2) }
+        video { width: 100%; display: block; background: black }
+        .watermark { position: absolute; top: 10%; left: 8%; font-size: 18px; color: rgba(30,91,190,0.15); pointer-events:none; font-weight: 600 }
+        @keyframes move { from { opacity: 0.08 } to { opacity: 0.15 } }
+        #alert-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 99; text-align: center; padding-top: 15%; color: #EF4444; backdrop-filter: blur(4px) }
+        .btn { background: var(--primary); border: none; transition: all 0.2s; margin-top: 20px; padding: 10px 24px; border-radius: 6px }
+        .btn:hover { background: #1E5BBE; transform: translateY(-2px) }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+    <div id="alert-overlay"><h1>⛔ ممنوع التصوير!</h1><p>تم تسجيل المخالفة: {{ user.name }}</p></div>
+    <div class="video-box">
+        <video controls controlsList="nodownload" id="vid"><source src="{{ video.url }}"></video>
+        <div class="watermark">{{ user.name }} - {{ user.id }}</div>
+    </div>
+    <a href="/" class="btn btn-secondary mt-3">العودة</a>
+    <script>
+        window.addEventListener('keyup', (e) => { if(e.key == 'PrintScreen') punish(); });
+        function punish() {
+            document.getElementById('vid').pause();
+            document.getElementById('alert-overlay').style.display = 'block';
+            setTimeout(() => { document.getElementById('alert-overlay').style.display = 'none'; }, 4000);
+        }
+    </script>
+</body>
+</html>
