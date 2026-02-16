@@ -1,52 +1,24 @@
-<!doctype html>
-<!-- Register page: collect minimal profile info for research platform -->
-<html lang="ar" dir="rtl">
-  <head>
-    <meta charset="UTF-8" />
-    <title>إنشاء حساب</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-      rel="stylesheet" />
-    <style>
-      body { background: linear-gradient(135deg, #F8FAFB 0%, #E8EEF7 100%); color: #0B1621; height: 100vh; display:flex; align-items:center; justify-content:center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
-      .card-surface { background: #FFFFFF; border-radius: 12px; box-shadow: 0 12px 36px rgba(11,26,43,0.1); width:420px; border: 1px solid #E5EAEF }
-      .brand-btn { background-color: #0B3D91; border: none; transition: all 0.24s; }
-      .brand-btn:hover { background-color: #1E5BBE; transform: translateY(-2px) }
-      input, input::placeholder { color-scheme: light; }
-      input::placeholder { color: #8A92A3 }
-      input.form-control { border: 1px solid #D5DDE5; transition: border-color 0.2s }
-      input.form-control:focus { border-color: #1E5BBE; box-shadow: 0 0 0 3px rgba(30,91,190,0.1) }
-    </style>
-  </head>
-  <body>
-    <div class="p-4 card-surface">
-      <h3 class="text-center mb-4">إنشاء حساب — Research Search</h3>
-      <form method="POST">
-        <input
-          type="text"
-          name="name"
-          class="form-control mb-3"
-          placeholder="الاسم (Nickname)"
-          required />
-        <input
-          type="email"
-          name="email"
-          class="form-control mb-3"
-          placeholder="البريد الإلكتروني"
-          required />
-        <input type="tel" name="phone_number" class="form-control mb-3" placeholder="رقم الهاتف (201xxxxxxxxx)" pattern="^201\d{9}$" title="يجب أن يبدأ بـ 201 ويتكون من 12 رقم" required />
-        <input type="tel" name="parent_phone_number" class="form-control mb-3" placeholder="رقم ولي الأمر (201xxxxxxxxx)" pattern="^201\d{9}$" title="يجب أن يبدأ بـ 201 ويتكون من 12 رقم" required />
-        <input
-          type="password"
-          name="password"
-          class="form-control mb-4"
-          placeholder="كلمة المرور"
-          required />
-        <button class="btn brand-btn text-white w-100 mb-3">تسجيل</button>
-        <div class="text-center">
-          <a href="/login" class="text-info">لديك حساب بالفعل؟</a>
-        </div>
-      </form>
+{% extends 'base.html' %}
+
+{% block title %}Register - Boody Gimer - Edu Platform{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-center" style="min-height: 80vh;">
+    <div class="p-4 bg-dark text-light rounded shadow" style="width: 420px; border: 1px solid #414868;">
+        <h3 class="text-center mb-4">إنشاء حساب</h3>
+        <form method="POST">
+            <input type="text" name="name" class="form-control mb-3 bg-secondary text-light border-0" placeholder="الاسم (Nickname)" required>
+            <input type="email" name="email" class="form-control mb-3 bg-secondary text-light border-0" placeholder="البريد الإلكتروني" required>
+            <input type="tel" name="phone_number" class="form-control mb-3 bg-secondary text-light border-0" placeholder="رقم الهاتف (201xxxxxxxxx)" pattern="^201\d{9}$" title="يجب أن يبدأ بـ 201 ويتكون من 12 رقم" required>
+            <input type="tel" name="parent_phone_number" class="form-control mb-3 bg-secondary text-light border-0" placeholder="رقم ولي الأمر (201xxxxxxxxx)" pattern="^201\d{9}$" title="يجب أن يبدأ بـ 201 ويتكون من 12 رقم" required>
+            <input type="password" name="password" class="form-control mb-4 bg-secondary text-light border-0" placeholder="كلمة المرور" required>
+            <button class="btn btn-primary w-100 mb-3">تسجيل</button>
+            <div class="text-center">
+                <a href="/login" class="text-info">لديك حساب بالفعل؟</a>
+            </div>
+        </form>
     </div>
+</div>
+{% endblock %}
   </body>
 </html>

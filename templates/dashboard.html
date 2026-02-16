@@ -1,153 +1,53 @@
-<!doctype html>
-<html lang="ar" dir="rtl">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>لوحة التحكم المدرسية</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-      rel="stylesheet" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap"
-      rel="stylesheet" />
-    <style>
-      /* Professional Color System - Academic Research Theme */
-      :root {
-        --primary: #0B3D91;
-        --primary-light: #1E5BBE;
-        --primary-dark: #071E4A;
-        --bg-page: #F8FAFB;
-        --bg-card: #FFFFFF;
-        --bg-hover: #F0F4F9;
-        --text-dark: #0B1621;
-        --text-normal: #2D3E52;
-        --text-muted: #8A92A3;
-        --border-light: #D5DDE5;
-        --success: #10B981;
-        --warning: #F59E0B;
-        --danger: #EF4444;
-        --info: #3B82F6;
-      }
-      body { background-color: var(--bg-page); color: var(--text-dark); font-family: "Cairo", -apple-system, BlinkMacSystemFont, sans-serif; overflow-x: hidden; }
-      .sidebar { height: 100vh; background: linear-gradient(180deg, #0B3D91 0%, #071E4A 100%); color: white; padding-top: 20px; position: fixed; width: 250px; transition: all 0.2s; }
-      .sidebar-brand {
-        font-size: 1.5rem;
-        font-weight: 700;
-        padding: 0 1rem;
-        margin-bottom: 2rem;
-        text-align: center;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-      }
-      .nav-link {
-        color: rgba(255, 255, 255, 0.8);
-        padding: 1rem;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-      .nav-link:hover,
-      .nav-link.active {
-        color: #fff;
-        background-color: rgba(255, 255, 255, 0.12);
-        text-decoration: none;
-        border-radius: 4px;
-      }
-      .main-content {
-        margin-right: 250px;
-        padding: 30px;
-        background-color: var(--bg-page);
-      }
-      .card { background-color: var(--bg-card); border: 1px solid var(--border-light); border-radius: 12px; box-shadow: 0 2px 8px rgba(11,26,43,0.04); margin-bottom: 20px; transition: all 0.2s; }
-      .card:hover { box-shadow: 0 8px 24px rgba(11,26,43,0.08); transform: translateY(-2px) }
-      .card-header { background-color: transparent; border-bottom: 1px solid var(--border-light); font-weight: 700; padding: 1.25rem; color: var(--text-dark) }
-      .stat-card {
-        border-left: 4px solid var(--primary-light);
-        background: linear-gradient(135deg, rgba(30,91,190,0.02) 0%, rgba(30,91,190,0.01) 100%);
-      }
-      .btn-custom { border-radius: 6px; padding: 7px 18px; background: var(--primary); color: white; border: none; transition: all 0.2s; font-weight: 500; }
-      .btn-custom:hover { background: var(--primary-light); transform: translateY(-2px) }
-      .table-dark {
-        background-color: transparent;
-        --bs-table-bg: transparent;
-        color: var(--text-normal);
-      }
-      .table-dark th {
-        color: var(--primary);
-        font-weight: 700;
-        border-color: var(--border-light);
-      }
-      .table-dark td {
-        border-color: var(--border-light);
-      }
-      /* Custom Scrollbar */
-      ::-webkit-scrollbar {
-        width: 8px;
-      }
-      ::-webkit-scrollbar-track {
-        background: var(--bg-page);
-      }
-      ::-webkit-scrollbar-thumb {
-        background: var(--primary-light);
-        border-radius: 4px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: var(--primary);
-      }
-      .announcement-item, .resource-item { border-bottom: 1px solid var(--border-light); padding: 14px 0 }
-      .announcement-item:last-child, .resource-item:last-child { border-bottom: none }
-      .announcement-item h5, .resource-item h5 { color: var(--primary-light) }
-      /* Responsive adjustments */
-      @media (max-width: 768px) {
-        .sidebar {
-          width: 100%;
-          height: auto;
-          position: relative;
-        }
-        .main-content {
-          margin-right: 0;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <!-- Sidebar -->
-    <div class="sidebar d-flex flex-column">
-      <div class="sidebar-brand"><span>🎓</span> مدرستي</div>
-      <nav class="nav flex-column">
-        <a class="nav-link active" href="/dashboard">
-          <span>🏠</span> لوحة التحكم
-        </a>
-        <a class="nav-link" href="/"> <span>💬</span> الشات (Discord) </a>
-        <a class="nav-link" href="/watch"> <span>📺</span> الفيديوهات </a>
-        {% if user.role == 'Owner' %}
-        <div class="mt-auto p-3">
-          <small class="text-white-50">لوحة المالك</small>
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Boody Gimer - Edu Platform{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="mb-0">أهلاً بك، {{ current_user.name }}! 👋</h2>
+                <p class="text-muted">هنا ملخص لما يحدث في مدرستك اليوم.</p>
+            </div>
+            <div class="rounded-pill px-4 py-2 bg-primary text-white font-weight-bold">
+                {{ current_user.role == 'Teacher' and '👨‍🏫 مدرس' or '👨‍🎓 طالب' }}
+            </div>
         </div>
-        {% endif %}
-        <a class="nav-link text-danger mt-auto" href="/logout">
-          <span>🚪</span> تسجيل الخروج
-        </a>
-      </nav>
+
+        <!-- Dynamic Buttons -->
+        <div class="mb-4">
+            {% if current_user.role == 'Teacher' %}
+                <a href="/upload_lesson" class="btn btn-success">Upload Lesson</a>
+            {% else %}
+                <a href="/view_lessons" class="btn btn-info">View Lessons</a>
+            {% endif %}
+        </div>
+
+        <!-- Rest of the content -->
+        <!-- Announcements, Resources, etc. -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">الإعلانات</div>
+                    <div class="card-body">
+                        <!-- Announcements content -->
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">الموارد</div>
+                    <div class="card-body">
+                        <!-- Resources content -->
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-
-    <!-- Main Content -->
-    <div class="main-content">
-      <!-- Header -->
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h2 class="mb-0">أهلاً بك، {{ user.name }}! 👋</h2>
-          <p class="text-muted">هنا ملخص لما يحدث في مدرستك اليوم.</p>
-        </div>
-        <div class="rounded-pill px-4 py-2" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); color: white; font-weight: 600">
-          {{ user.role == 'Owner' and '👑 مالك' or (user.role == 'Teacher' and '👨‍🏫 مدرس' or '👨‍🎓 طالب') }}
-        </div>
-      </div>
-
-      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+</div>
+{% endblock %}
       messages %} {% for category, message in messages %}
       <div
         class="alert alert-{{ category }} alert-dismissible fade show"
